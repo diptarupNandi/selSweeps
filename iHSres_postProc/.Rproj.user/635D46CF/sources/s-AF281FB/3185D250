@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588586342500.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "3185D250",
+    "lastKnownWriteTime" : 1588586354,
+    "last_content_update" : 1588586354292,
+    "path" : "~/Documents/kaaj/selectSign/selScan/scripts/iHS/iHS_plots.R",
+    "project_path" : "iHS_plots.R",
+    "properties" : {
+        "cursorPosition" : "1,14",
+        "scrollLine" : "1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

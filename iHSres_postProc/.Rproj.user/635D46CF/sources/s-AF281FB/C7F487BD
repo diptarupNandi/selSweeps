@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588586413141.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2344908469",
+    "id" : "C7F487BD",
+    "lastKnownWriteTime" : 1582284360,
+    "last_content_update" : 1582284360,
+    "path" : "~/Documents/kaaj/selectSign/selScan/scripts/iHS/propHiIHS_wind.R",
+    "project_path" : "propHiIHS_wind.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
