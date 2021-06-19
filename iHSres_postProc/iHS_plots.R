@@ -2,11 +2,11 @@
 library(dplyr)
 library(ggplot2)
 
-source("~/Documents/kaaj/selectSign/selScan/scripts/iHS/propHiIHS_wind.R")
-
+source("~/Documents/kaaj/selectSign/selSweeps/scripts/iHSres_postProc/propHiIHS_wind.R")
+source("~/Documents/kaaj/selectSign/selSweeps/scripts/iHSres_postProc/propXiHS_clusters.R")
 
 # Set parent result folder as the working directory 
-setwd("~/Documents/kaaj/selectSign/selScan/resultsUS/iHS/set1/")
+setwd("~/Documents/kaaj/selectSign/selSweeps/selScan/resultsUS/iHS/set1/")
 
 # Load the text file containing the selected population IDs 
 popID = readLines("popSelect.txt")
@@ -14,6 +14,7 @@ popID = readLines("popSelect.txt")
 # Initiate lists, dataframes etc
 ls_iHS_top1 = list()
 propHiIHSWind = list()
+hiIHSwind_full_ls = list()
 
 # Plots top 1% iHS scores of a chromosome of all the populations in a single file
 for (chr in 1:22) {
@@ -37,7 +38,8 @@ for (chr in 1:22) {
     # Save the object into a list 
     ls_iHS_top1[[iter]] = iHS_top1
     
-    propHiIHSWind_temp = find_HiiHS_SNPclusters(iHS_chr,.5)
+    propHiIHSWind_temp = findXiHS_SNPclusters(iHS_chr,1,0.2)
+  
     propHiIHSWind[[iter]] =  propHiIHSWind_temp  %>% mutate(pOp = pID)
     
     iter = iter + 1
@@ -52,22 +54,81 @@ for (chr in 1:22) {
   iHS_top1 = get(dfNam)
   propHiiHSwind = get(dfNam0)
   
-  hiIHSwind = propHiiHSwind %>% filter (propTop1 > 0.1 & nSNPs > 20)
+  
+  
+  
+  XiHSwind_full = propHiiHSwind %>% rowwise() %>% 
+    mutate(propTopMax = max(c(propTop1,propTop1_pB,propTop1_nB)), 
+           startWin = case_when(
+             which.max(c(propTop1,propTop1_pB,propTop1_nB)) == 3 ~ fSNP_nB,
+             which.max(c(propTop1,propTop1_pB,propTop1_nB)) == 1 | 2 ~ fSNP),
+           endWin = case_when(
+             which.max(c(propTop1,propTop1_pB,propTop1_nB)) == 2 ~ lSNP_pB,
+             which.max(c(propTop1,propTop1_pB,propTop1_nB)) == 1 | 3 ~ lSNP))
+  
+  
+  XiIHSwind_temp = XiHSwind_full %>% filter(propTop1 > 0.1 & nSNPs > 20) %>% 
+    select(propTop1,fSNP,lSNP,pOp)
+  
+  
+  # Filters the windows that contains at least 10% hiIHS SNPs and 20 SNPs
+  XiIHSwind_fin = XiHSwind_full %>% filter(propTopMax > 0.1 & nSNPs > 20) %>% 
+    select(propTopMax,startWin,endWin,pOp)
+  
+  
+  
+  # Filters top 1% of the windows based on the proportion of hiIHS SNPs
+  # hiIHSwind_top1 = propHiiHSwind %>% group_by(pOp) %>% filter(propTop1 > quantile(propTop1,.99) & nSNPs > 20)
+  
+  # collating the hiIHSwind data for all chromosomes 
+  hiIHSwind_full_ls[[chr]] = XiHSwind_full %>% mutate(chromosme = chr)
+  
   
   # create the ggplot Object with chromosome positions as X and top 1% |iHS| as Y
   # plotObj <- ggplot(data=tempDat, aes(x = chrPos/1000000, y = iHS_mod, colour=pOp)) 
-  ggplot() +  geom_rect(data = hiIHSwind, aes(xmin = fSNP/1000000, xmax = lSNP/1000000, ymin = -Inf, ymax = Inf, fill = pOp), alpha = 0.4) +
-    geom_point(data=iHS_top1, aes(x = chrPos/1000000, y = iHS_mod, colour=pOp), size=.1) + facet_grid(pOp ~ .) +
-    theme_bw() + xlab("Position (Mb)") + ylab("|iHS|") 
+  ggplot() +  geom_rect(data = XiIHSwind_fin, 
+                        aes(xmin = startWin/1000000, xmax = endWin/1000000, 
+                            ymin = -Inf, ymax = Inf, fill = propTopMax), alpha = 0.33) +
+    geom_point(data=iHS_top1, aes(x = chrPos/1000000, y = iHS_mod, colour=pOp), size=.1, show.legend = FALSE) + 
+    facet_grid(pOp ~ .) + theme_bw() + xlab("Position (Mb)") + ylab("|iHS|") +
+    theme(strip.background = element_rect(fill="white", color="black"),
+          legend.title = element_blank()) +
+    scale_fill_gradient(low = "#132B4385", high = "#56B1F785")
   
   # Generate the scatter plot
   # plotObj + geom_point(size=.1) + facet_grid(pOp ~ .) + theme_bw() +  
   #   xlab("Position (Mb)") + ylab("|iHS|")
   
   # Create the output file name
-  outFname = paste("iHS_top1_plot_chr", chr, ".pdf", sep = "")
+  outFname = paste("XiHS_1plusBcM_10p_chr", chr, ".pdf", sep = "")
   # Save the plot for a given chromosome
-  ggsave(outFname, path =  "iHS_plots/")
+  ggsave(outFname, path =  "figures/XiHS_1cM_plusB_10p_plots/")
+  
+  ggplot() +  geom_rect(data = XiIHSwind_temp, 
+                        aes(xmin = fSNP/1000000, xmax = lSNP/1000000, 
+                            ymin = -Inf, ymax = Inf, fill = propTop1), alpha = 0.33) +
+    geom_point(data=iHS_top1, aes(x = chrPos/1000000, y = iHS_mod, colour=pOp), size=.1, show.legend = FALSE) + 
+    facet_grid(pOp ~ .) + theme_bw() + xlab("Position (Mb)") + ylab("|iHS|") +
+    theme(strip.background = element_rect(fill="white", color="black"),
+          legend.title = element_blank()) +
+    scale_fill_gradient(low = "#132B4385", high = "#56B1F785")
+  
+  # Create the output file name
+  outF1name = paste("XiHS_1cM_10p_chr", chr, ".pdf", sep = "")
+  # Save the plot for a given chromosome
+  ggsave(outF1name, path =  "figures/XiHS_1cM_10p_plots/")
   
   print(paste("Finished all populations for chromosome", chr))
 }
+
+# Collated df conatining all the hiIHS windows on all chromosomes of all the populations
+XiHSwind_full_SAS = do.call(rbind.data.frame, hiIHSwind_full_ls)
+write.csv(XiHSwind_full_SAS,"./XiHSwind_1cM_plusB_full_SAS.csv")
+
+
+
+XiHSwind_SAS_summary = XiHSwind_full_SAS %>% filter(propTop1 > 0.1 & nSNPs > 20) %>% group_by(pOp,chromosme) %>% summarise(Num_windows = n()) 
+
+hist(hiIHSwind_full$propTop1, xlab = "Proportion of extreme IHS SNPs", xlim = c(0,.8), ylim = c(0,200), main = "Distribution of extreme IHS SNPs proportions")
+
+
